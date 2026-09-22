@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PetGrid Hub - Gestão de Produtos e Estoque</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+    <div class="container">
+
+        <header>
+            <img src="img/pet.png" alt="Pets">
+            <h1>PETGRID HUB</h1>
+            <p>Gestão de produtos e estoque</p>
+        </header>
+
+        <section class="form-section">
+            <h2 id="form-title">Adicionar Produto</h2>
+
+            <form id="produtoForm">
+                <input type="hidden" id="produtoId">
+
+                <div class="form-grid">
+
+                    <div class="form-group">
+                        <label for="nomeProduto">Produto</label>
+                        <input type="text" id="nomeProduto" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="codigoBarras">Código de barras</label>
+                        <input type="text" id="codigoBarras">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="marca">Marca</label>
+                        <input type="text" id="marca">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="categoria">Categoria</label>
+                        <select id="categoria" required>
+                            <option value="">Selecione</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="tipoPet">Tipo de pet</label>
+                        <select id="tipoPet">
+                            <option value="">Selecione</option>
+                            <option value="Cães">Cães</option>
+                            <option value="Gatos">Gatos</option>
+                            <option value="Aves">Aves</option>
+                            <option value="Roedores">Roedores</option>
+                            <option value="Peixes">Peixes</option>
+                            <option value="Todos">Todos</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="unidadeVenda">Unidade de venda</label>
+                        <select id="unidadeVenda">
+                            <option value="UN">UN</option>
+                            <option value="KG">KG</option>
+                            <option value="L">L</option>
+                            <option value="PCT">PCT</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="lote">Lote</label>
+                        <input type="text" id="lote">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="estoqueAtual">Estoque atual</label>
+                        <input type="number" id="estoqueAtual" min="0" value="0">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="estoqueMinimo">Estoque mínimo</label>
+                        <input type="number" id="estoqueMinimo" min="0" value="0">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="custoAquisicao">Custo de aquisição (R$)</label>
+                        <input type="number" id="custoAquisicao" min="0" step="0.01" value="0">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="precoVenda">Preço de venda (R$)</label>
+                        <input type="number" id="precoVenda" min="0" step="0.01" value="0">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="dataEntrada">Data de entrada</label>
+                        <input type="date" id="dataEntrada">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="dataValidade">Data de validade</label>
+                        <input type="date" id="dataValidade">
+                    </div>
+
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary" id="btnSubmit">Adicionar produto</button>
+                    <button type="button" class="btn btn-secondary" id="btnCancelar" style="display:none;" onclick="cancelarEdicao()">Cancelar</button>
+                </div>
+            </form>
+        </section>
+
+        <section class="table-section">
+            <h2>Produtos</h2>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Produto</th>
+                        <th>Categoria</th>
+                        <th>Pet</th>
+                        <th>Estoque</th>
+                        <th>Preço</th>
+                        <th>Validade</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="tabelaProdutos">
+                    <tr>
+                        <td colspan="7" class="empty-msg">Nenhum produto cadastrado.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+    </div>
+
+    <script src="scripts.js"></script>
+</body>
+</html>
