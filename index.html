@@ -11,10 +11,29 @@
     <div class="container">
 
         <header>
-            <img src="img/pet.png" alt="Pets">
             <h1>PETGRID HUB</h1>
-            <p>Gestão de produtos e estoque</p>
+            <p>Gestão Inteligente de Produtos e Estoque de Pet Shop</p>
         </header>
+
+        <!-- KPI / Painel de Resumo -->
+        <section class="kpi-section">
+            <div class="kpi-card">
+                <span class="kpi-title">Total de Produtos</span>
+                <span class="kpi-value" id="kpiTotalProdutos">0</span>
+            </div>
+            <div class="kpi-card warning">
+                <span class="kpi-title">Alertas de Estoque</span>
+                <span class="kpi-value" id="kpiEstoqueCritico">0</span>
+            </div>
+            <div class="kpi-card success">
+                <span class="kpi-title">Valor do Estoque</span>
+                <span class="kpi-value" id="kpiValorEstoque">R$ 0,00</span>
+            </div>
+            <div class="kpi-card info">
+                <span class="kpi-title">Categorias</span>
+                <span class="kpi-value" id="kpiTotalCategorias">0</span>
+            </div>
+        </section>
 
         <section class="form-section">
             <h2 id="form-title">Adicionar Produto</h2>
@@ -25,22 +44,22 @@
                 <div class="form-grid">
 
                     <div class="form-group">
-                        <label for="nomeProduto">Produto</label>
-                        <input type="text" id="nomeProduto" required>
+                        <label for="nomeProduto">Produto *</label>
+                        <input type="text" id="nomeProduto" required placeholder="Ex: Ração Premium Adultos 15kg">
                     </div>
 
                     <div class="form-group">
                         <label for="codigoBarras">Código de barras</label>
-                        <input type="text" id="codigoBarras">
+                        <input type="text" id="codigoBarras" placeholder="7891234567890">
                     </div>
 
                     <div class="form-group">
                         <label for="marca">Marca</label>
-                        <input type="text" id="marca">
+                        <input type="text" id="marca" placeholder="Ex: Golden, Pedigree, Premier">
                     </div>
 
                     <div class="form-group">
-                        <label for="categoria">Categoria</label>
+                        <label for="categoria">Categoria *</label>
                         <select id="categoria" required>
                             <option value="">Selecione</option>
                         </select>
@@ -62,16 +81,16 @@
                     <div class="form-group">
                         <label for="unidadeVenda">Unidade de venda</label>
                         <select id="unidadeVenda">
-                            <option value="UN">UN</option>
-                            <option value="KG">KG</option>
-                            <option value="L">L</option>
-                            <option value="PCT">PCT</option>
+                            <option value="UN">UN (Unidade)</option>
+                            <option value="KG">KG (Quilo)</option>
+                            <option value="L">L (Litro)</option>
+                            <option value="PCT">PCT (Pacote)</option>
                         </select>
                     </div>
 
                     <div class="form-group">
                         <label for="lote">Lote</label>
-                        <input type="text" id="lote">
+                        <input type="text" id="lote" placeholder="Ex: LOTE-2026-09">
                     </div>
 
                     <div class="form-group">
@@ -86,12 +105,12 @@
 
                     <div class="form-group">
                         <label for="custoAquisicao">Custo de aquisição (R$)</label>
-                        <input type="number" id="custoAquisicao" min="0" step="0.01" value="0">
+                        <input type="number" id="custoAquisicao" min="0" step="0.01" value="0.00">
                     </div>
 
                     <div class="form-group">
                         <label for="precoVenda">Preço de venda (R$)</label>
-                        <input type="number" id="precoVenda" min="0" step="0.01" value="0">
+                        <input type="number" id="precoVenda" min="0" step="0.01" value="0.00">
                     </div>
 
                     <div class="form-group">
@@ -113,28 +132,49 @@
             </form>
         </section>
 
-        <section class="table-section">
-            <h2>Produtos</h2>
-
-            <table>
-                <thead>
-                    <tr>
-                        <th>Produto</th>
-                        <th>Categoria</th>
-                        <th>Pet</th>
-                        <th>Estoque</th>
-                        <th>Preço</th>
-                        <th>Validade</th>
-                        <th>Ações</th>
-                    </tr>
-                </thead>
-                <tbody id="tabelaProdutos">
-                    <tr>
-                        <td colspan="7" class="empty-msg">Nenhum produto cadastrado.</td>
-                    </tr>
-                </tbody>
-            </table>
+        <!-- Barra de Ferramentas / Busca e Visualização -->
+        <section class="toolbar-section">
+            <div class="search-bar">
+                <input type="text" id="inputBusca" placeholder="🔍 Buscar por produto ou marca..." oninput="filtrarProdutos()">
+                <select id="filtroCategoria" onchange="filtrarProdutos()">
+                    <option value="">Todas as categorias</option>
+                </select>
+            </div>
+            <div class="view-toggle">
+                <button class="btn-toggle active" id="btnModoCards" onclick="alternarModo('cards')">🎴 Cards</button>
+                <button class="btn-toggle" id="btnModoTabela" onclick="alternarModo('tabela')">📋 Tabela</button>
+            </div>
         </section>
+
+        <!-- Lista / Grid de Produtos -->
+        <section class="products-section">
+            <div id="cardsProdutos" class="cards-grid">
+                <div class="empty-msg">Nenhum produto cadastrado.</div>
+            </div>
+
+            <div id="tabelaContainer" style="display: none;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Produto</th>
+                            <th>Categoria</th>
+                            <th>Pet</th>
+                            <th>Estoque</th>
+                            <th>Preço</th>
+                            <th>Validade</th>
+                            <th>Status</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabelaProdutos">
+                        <tr>
+                            <td colspan="8" class="empty-msg">Nenhum produto cadastrado.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
 
     </div>
 

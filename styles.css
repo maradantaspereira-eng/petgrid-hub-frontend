@@ -213,14 +213,197 @@ tbody td {
     background: #a5321f;
 }
 
-.empty-msg {
-    text-align: center;
-    padding: 20px;
-    color: #7a9cc6;
+/* KPI Section */
+.kpi-section {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    margin-bottom: 25px;
+}
+
+.kpi-card {
+    background: #ffffff;
+    padding: 18px 20px;
+    border-radius: 8px;
+    border: 1px solid #d0e2f2;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+    display: flex;
+    flex-direction: column;
+}
+
+.kpi-title {
+    font-size: 0.8rem;
+    color: #64748b;
+    text-transform: uppercase;
+    font-weight: 600;
+    margin-bottom: 6px;
+}
+
+.kpi-value {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: #1a56a8;
+}
+
+.kpi-card.warning .kpi-value {
+    color: #d97706;
+}
+
+.kpi-card.success .kpi-value {
+    color: #16a34a;
+}
+
+.kpi-card.info .kpi-value {
+    color: #0284c7;
+}
+
+/* Toolbar & Search */
+.toolbar-section {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+
+.search-bar {
+    display: flex;
+    gap: 10px;
+    flex: 1;
+    min-width: 280px;
+}
+
+.search-bar input,
+.search-bar select {
+    padding: 10px 14px;
+    border: 1px solid #c4d7eb;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    outline: none;
+    background: #ffffff;
+}
+
+.search-bar input {
+    flex: 1;
+}
+
+.view-toggle {
+    display: flex;
+    gap: 5px;
+    background: #e2ecf5;
+    padding: 4px;
+    border-radius: 6px;
+}
+
+.btn-toggle {
+    padding: 8px 14px;
+    border: none;
+    background: transparent;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    color: #475569;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+
+.btn-toggle.active {
+    background: #ffffff;
+    color: #1a56a8;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+/* Products Section & Cards Grid */
+.products-section {
+    background: #ffffff;
+    padding: 25px;
+    border-radius: 8px;
+    border: 1px solid #d0e2f2;
+}
+
+.cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 20px;
+}
+
+.product-card {
+    background: #f8fbff;
+    border: 1px solid #d0e2f2;
+    border-radius: 8px;
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.product-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(26, 86, 168, 0.08);
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 10px;
+}
+
+.card-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #1e293b;
+}
+
+.card-badge {
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.badge-ok {
+    background: #dcfce7;
+    color: #15803d;
+}
+
+.badge-warning {
+    background: #fef3c7;
+    color: #b45309;
+}
+
+.card-details {
+    font-size: 0.88rem;
+    color: #475569;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    margin-bottom: 15px;
+}
+
+.card-price {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #1a56a8;
+    margin-top: 5px;
+}
+
+.card-actions {
+    display: flex;
+    gap: 8px;
+    border-top: 1px solid #e2ecf5;
+    padding-top: 12px;
 }
 
 @media (max-width: 700px) {
     .form-grid {
         grid-template-columns: 1fr;
+    }
+
+    .toolbar-section {
+        flex-direction: column;
+        align-items: stretch;
     }
 }

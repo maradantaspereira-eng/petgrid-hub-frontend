@@ -1,59 +1,183 @@
 const API_URL = "http://127.0.0.1:5001";
 
-// Carrega categorias no select
+let listaProdutosGlobal = [];
+let listaCategoriasGlobal = [];
+let modoVisualizacao = "cards";
+
+// Carrega categorias no select do formulário e no filtro
 async function carregarCategorias() {
     try {
         const resp = await fetch(`${API_URL}/categorias`);
         const categorias = await resp.json();
-        const select = document.getElementById("categoria");
+        listaCategoriasGlobal = categorias;
 
-        // Mantém a primeira opção "Selecione"
-        select.innerHTML = '<option value="">Selecione</option>';
+        const selectForm = document.getElementById("categoria");
+        const selectFiltro = document.getElementById("filtroCategoria");
+
+        selectForm.innerHTML = '<option value="">Selecione</option>';
+        selectFiltro.innerHTML = '<option value="">Todas as categorias</option>';
 
         categorias.forEach(function(cat) {
-            const option = document.createElement("option");
-            option.value = cat.id;
-            option.textContent = cat.nome;
-            select.appendChild(option);
+            const optForm = document.createElement("option");
+            optForm.value = cat.id;
+            optForm.textContent = cat.nome;
+            selectForm.appendChild(optForm);
+
+            const optFiltro = document.createElement("option");
+            optFiltro.value = cat.id;
+            optFiltro.textContent = cat.nome;
+            selectFiltro.appendChild(optFiltro);
         });
+
+        document.getElementById("kpiTotalCategorias").textContent = categorias.length;
     } catch (err) {
         console.error("Erro ao carregar categorias:", err);
     }
 }
 
-// Carrega produtos na tabela
+// Carrega produtos da API
 async function carregarProdutos() {
     try {
         const resp = await fetch(`${API_URL}/produtos`);
         const produtos = await resp.json();
-        const tbody = document.getElementById("tabelaProdutos");
+        listaProdutosGlobal = produtos;
 
-        if (produtos.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="7" class="empty-msg">Nenhum produto cadastrado.</td></tr>';
-            return;
-        }
-
-        tbody.innerHTML = "";
-
-        produtos.forEach(function(p) {
-            const tr = document.createElement("tr");
-
-            tr.innerHTML =
-                "<td>" + p.nome + "</td>" +
-                "<td>" + (p.categoria_nome || "-") + "</td>" +
-                "<td>" + (p.tipo_pet || "-") + "</td>" +
-                "<td>" + p.estoque_atual + "</td>" +
-                "<td>" + Number(p.preco_venda).toFixed(2) + "</td>" +
-                "<td>" + formatarData(p.data_validade) + "</td>" +
-                '<td class="actions-cell">' +
-                    '<button class="btn-edit" onclick="editarProduto(' + p.id + ')">Editar</button>' +
-                    '<button class="btn-delete" onclick="excluirProduto(' + p.id + ')">Excluir</button>' +
-                '</td>';
-
-            tbody.appendChild(tr);
-        });
+        atualizarKPIs(produtos);
+        filtrarProdutos();
     } catch (err) {
         console.error("Erro ao carregar produtos:", err);
+    }
+}
+
+// Atualiza o painel de KPIs
+function atualizarKPIs(produtos) {
+    const totalProdutos = produtos.length;
+    let estoqueCritico = 0;
+    let valorEstoque = 0;
+
+    produtos.forEach(p => {
+        if (p.estoque_atual <= p.estoque_minimo) {
+            estoqueCritico++;
+        }
+        valorEstoque += (p.estoque_atual * (p.preco_venda || 0));
+    });
+
+    document.getElementById("kpiTotalProdutos").textContent = totalProdutos;
+    document.getElementById("kpiEstoqueCritico").textContent = estoqueCritico;
+    document.getElementById("kpiValorEstoque").textContent = "R$ " + valorEstoque.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+// Filtra produtos com base na busca e na categoria selecionada
+function filtrarProdutos() {
+    const busca = document.getElementById("inputBusca").value.toLowerCase().trim();
+    const catId = document.getElementById("filtroCategoria").value;
+
+    const filtrados = listaProdutosGlobal.filter(p => {
+        const bateNomeOuMarca = (p.nome || "").toLowerCase().includes(busca) || (p.marca || "").toLowerCase().includes(busca);
+        const bateCategoria = catId === "" || String(p.categoria_id) === String(catId);
+        return bateNomeOuMarca && bateCategoria;
+    });
+
+    renderizarCards(filtrados);
+    renderizarTabela(filtrados);
+}
+
+// Renderiza a visualização em Cards
+function renderizarCards(produtos) {
+    const container = document.getElementById("cardsProdutos");
+
+    if (produtos.length === 0) {
+        container.innerHTML = '<div class="empty-msg" style="grid-column: 1/-1;">Nenhum produto encontrado.</div>';
+        return;
+    }
+
+    container.innerHTML = "";
+
+    produtos.forEach(p => {
+        const card = document.createElement("div");
+        card.className = "product-card";
+
+        const isCritico = p.estoque_atual <= p.estoque_minimo;
+        const badgeClass = isCritico ? "badge-warning" : "badge-ok";
+        const badgeTexto = isCritico ? "Estoque Baixo" : "Em Estoque";
+
+        card.innerHTML = `
+            <div>
+                <div class="card-header">
+                    <span class="card-title">${p.nome}</span>
+                    <span class="card-badge ${badgeClass}">${badgeTexto}</span>
+                </div>
+                <div class="card-details">
+                    <span><strong>Categoria:</strong> ${p.categoria_nome || "-"}</span>
+                    <span><strong>Pet:</strong> ${p.tipo_pet || "Geral"} | <strong>Marca:</strong> ${p.marca || "-"}</span>
+                    <span><strong>Estoque:</strong> ${p.estoque_atual} ${p.unidade_venda || "UN"} (Mín: ${p.estoque_minimo})</span>
+                    <span><strong>Validade:</strong> ${formatarData(p.data_validade)}</span>
+                    <div class="card-price">R$ ${Number(p.preco_venda).toFixed(2)}</div>
+                </div>
+            </div>
+            <div class="card-actions">
+                <button class="btn-edit" onclick="editarProduto(${p.id})">✏️ Editar</button>
+                <button class="btn-delete" onclick="excluirProduto(${p.id})">🗑️ Excluir</button>
+            </div>
+        `;
+
+        container.appendChild(card);
+    });
+}
+
+// Renderiza a visualização em Tabela
+function renderizarTabela(produtos) {
+    const tbody = document.getElementById("tabelaProdutos");
+
+    if (produtos.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8" class="empty-msg">Nenhum produto encontrado.</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = "";
+
+    produtos.forEach(p => {
+        const tr = document.createElement("tr");
+        const isCritico = p.estoque_atual <= p.estoque_minimo;
+        const badgeClass = isCritico ? "badge-warning" : "badge-ok";
+        const badgeTexto = isCritico ? "Estoque Baixo" : "OK";
+
+        tr.innerHTML = `
+            <td><strong>${p.nome}</strong><br><small style="color:#64748b">${p.marca || ""}</small></td>
+            <td>${p.categoria_nome || "-"}</td>
+            <td>${p.tipo_pet || "-"}</td>
+            <td>${p.estoque_atual} ${p.unidade_venda || "UN"}</td>
+            <td>R$ ${Number(p.preco_venda).toFixed(2)}</td>
+            <td>${formatarData(p.data_validade)}</td>
+            <td><span class="card-badge ${badgeClass}">${badgeTexto}</span></td>
+            <td class="actions-cell">
+                <button class="btn-edit" onclick="editarProduto(${p.id})">Editar</button>
+                <button class="btn-delete" onclick="excluirProduto(${p.id})">Excluir</button>
+            </td>
+        `;
+
+        tbody.appendChild(tr);
+    });
+}
+
+// Alterna entre o modo Cards e o modo Tabela
+function alternarModo(modo) {
+    modoVisualizacao = modo;
+    const btnCards = document.getElementById("btnModoCards");
+    const btnTabela = document.getElementById("btnModoTabela");
+    const containerCards = document.getElementById("cardsProdutos");
+    const containerTabela = document.getElementById("tabelaContainer");
+
+    if (modo === "cards") {
+        btnCards.classList.add("active");
+        btnTabela.classList.remove("active");
+        containerCards.style.display = "grid";
+        containerTabela.style.display = "none";
+    } else {
+        btnTabela.classList.add("active");
+        btnCards.classList.remove("active");
+        containerCards.style.display = "none";
+        containerTabela.style.display = "block";
     }
 }
 
@@ -65,7 +189,7 @@ function formatarData(data) {
     return partes[2] + "/" + partes[1] + "/" + partes[0];
 }
 
-// Submit do formulário (adicionar ou atualizar)
+// Submit do formulário (Adicionar ou Atualizar)
 document.getElementById("produtoForm").addEventListener("submit", async function(e) {
     e.preventDefault();
 
@@ -91,14 +215,14 @@ document.getElementById("produtoForm").addEventListener("submit", async function
         let resp;
 
         if (id) {
-            // Atualizar
+            // PUT /produtos/<id>
             resp = await fetch(`${API_URL}/produtos/${id}`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(produto)
             });
         } else {
-            // Adicionar
+            // POST /produtos
             resp = await fetch(`${API_URL}/produtos`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -118,7 +242,7 @@ document.getElementById("produtoForm").addEventListener("submit", async function
     }
 });
 
-// Carregar dados do produto no formulário para edição
+// Carrega dados do produto no formulário para edição (GET /produtos/<id>)
 async function editarProduto(id) {
     try {
         const resp = await fetch(`${API_URL}/produtos/${id}`);
@@ -149,7 +273,7 @@ async function editarProduto(id) {
     }
 }
 
-// Excluir produto
+// Excluir produto (DELETE /produtos/<id>)
 async function excluirProduto(id) {
     if (!confirm("Deseja realmente excluir este produto?")) return;
 
