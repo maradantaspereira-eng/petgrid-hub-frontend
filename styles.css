@@ -253,6 +253,16 @@ tbody td {
     color: #16a34a;
 }
 
+.kpi-card.danger .kpi-value {
+    color: #b91c1c;
+}
+
+.kpi-sub {
+    font-size: 0.75rem;
+    color: #64748b;
+    margin-top: 4px;
+}
+
 .kpi-card.info .kpi-value {
     color: #0284c7;
 }
@@ -372,6 +382,18 @@ tbody td {
 .badge-warning {
     background: #fef3c7;
     color: #b45309;
+}
+
+.badge-danger {
+    background: #fee2e2;
+    color: #b91c1c;
+}
+
+.card-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    justify-content: flex-end;
 }
 
 .card-details {

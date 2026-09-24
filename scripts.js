@@ -28,8 +28,6 @@ async function carregarCategorias() {
             optFiltro.textContent = cat.nome;
             selectFiltro.appendChild(optFiltro);
         });
-
-        document.getElementById("kpiTotalCategorias").textContent = categorias.length;
     } catch (err) {
         console.error("Erro ao carregar categorias:", err);
     }
@@ -42,29 +40,58 @@ async function carregarProdutos() {
         const produtos = await resp.json();
         listaProdutosGlobal = produtos;
 
-        atualizarKPIs(produtos);
+        carregarResumo();
         filtrarProdutos();
     } catch (err) {
         console.error("Erro ao carregar produtos:", err);
+        const aviso = "Não foi possível conectar à API. Verifique se ela está em execução em " + API_URL + ".";
+        document.getElementById("cardsProdutos").innerHTML = '<div class="empty-msg" style="grid-column: 1/-1;">' + aviso + '</div>';
+        document.getElementById("tabelaProdutos").innerHTML = '<tr><td colspan="8" class="empty-msg">' + aviso + '</td></tr>';
     }
 }
 
-// Atualiza o painel de KPIs
-function atualizarKPIs(produtos) {
-    const totalProdutos = produtos.length;
-    let estoqueCritico = 0;
-    let valorEstoque = 0;
+// Escapa texto vindo da API antes de inseri-lo via innerHTML
+function esc(valor) {
+    const div = document.createElement("div");
+    div.textContent = valor == null ? "" : String(valor);
+    return div.innerHTML;
+}
 
-    produtos.forEach(p => {
-        if (p.estoque_atual <= p.estoque_minimo) {
-            estoqueCritico++;
+// Atualiza o painel de KPIs com os indicadores calculados pela API (GET /resumo)
+async function carregarResumo() {
+    try {
+        const resp = await fetch(`${API_URL}/resumo`);
+        const r = await resp.json();
+
+        document.getElementById("kpiTotalProdutos").textContent = r.total_produtos;
+        document.getElementById("kpiEstoqueCritico").textContent = r.estoque_critico;
+        document.getElementById("kpiValorEstoque").textContent = "R$ " + r.valor_estoque.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        document.getElementById("kpiTotalCategorias").textContent = r.total_categorias;
+        document.getElementById("kpiValidade").textContent = r.vencidos + r.a_vencer;
+        document.getElementById("kpiValidadeDetalhe").textContent = r.vencidos + " vencidos · " + r.a_vencer + " a vencer em 30 dias";
+    } catch (err) {
+        console.error("Erro ao carregar resumo:", err);
+    }
+}
+
+// Badge de validade (vazio quando nao ha alerta)
+function badgeValidade(status) {
+    if (status === "vencido") return '<span class="card-badge badge-danger">Vencido</span>';
+    if (status === "a_vencer") return '<span class="card-badge badge-warning">Vence em breve</span>';
+    return "";
+}
+
+// Extrai uma mensagem legivel de uma resposta de erro da API (400/404 ou 422)
+async function mensagemDeErro(resp, padrao) {
+    try {
+        const erro = await resp.json();
+        if (erro.erro) return erro.erro;
+        if (Array.isArray(erro) && erro.length) {
+            const campo = (erro[0].loc || []).join(".");
+            return (campo ? campo + ": " : "") + String(erro[0].msg).replace("Value error, ", "");
         }
-        valorEstoque += (p.estoque_atual * (p.preco_venda || 0));
-    });
-
-    document.getElementById("kpiTotalProdutos").textContent = totalProdutos;
-    document.getElementById("kpiEstoqueCritico").textContent = estoqueCritico;
-    document.getElementById("kpiValorEstoque").textContent = "R$ " + valorEstoque.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    } catch (e) { /* corpo nao era JSON */ }
+    return padrao;
 }
 
 // Filtra produtos com base na busca e na categoria selecionada
@@ -104,13 +131,16 @@ function renderizarCards(produtos) {
         card.innerHTML = `
             <div>
                 <div class="card-header">
-                    <span class="card-title">${p.nome}</span>
-                    <span class="card-badge ${badgeClass}">${badgeTexto}</span>
+                    <span class="card-title">${esc(p.nome)}</span>
+                    <span class="card-badges">
+                        ${badgeValidade(p.status_validade)}
+                        <span class="card-badge ${badgeClass}">${badgeTexto}</span>
+                    </span>
                 </div>
                 <div class="card-details">
-                    <span><strong>Categoria:</strong> ${p.categoria_nome || "-"}</span>
-                    <span><strong>Pet:</strong> ${p.tipo_pet || "Geral"} | <strong>Marca:</strong> ${p.marca || "-"}</span>
-                    <span><strong>Estoque:</strong> ${p.estoque_atual} ${p.unidade_venda || "UN"} (Mín: ${p.estoque_minimo})</span>
+                    <span><strong>Categoria:</strong> ${esc(p.categoria_nome) || "-"}</span>
+                    <span><strong>Pet:</strong> ${esc(p.tipo_pet) || "Geral"} | <strong>Marca:</strong> ${esc(p.marca) || "-"}</span>
+                    <span><strong>Estoque:</strong> ${p.estoque_atual} ${esc(p.unidade_venda) || "UN"} (Mín: ${p.estoque_minimo})</span>
                     <span><strong>Validade:</strong> ${formatarData(p.data_validade)}</span>
                     <div class="card-price">R$ ${Number(p.preco_venda).toFixed(2)}</div>
                 </div>
@@ -143,13 +173,13 @@ function renderizarTabela(produtos) {
         const badgeTexto = isCritico ? "Estoque Baixo" : "OK";
 
         tr.innerHTML = `
-            <td><strong>${p.nome}</strong><br><small style="color:#64748b">${p.marca || ""}</small></td>
-            <td>${p.categoria_nome || "-"}</td>
-            <td>${p.tipo_pet || "-"}</td>
-            <td>${p.estoque_atual} ${p.unidade_venda || "UN"}</td>
+            <td><strong>${esc(p.nome)}</strong><br><small style="color:#64748b">${esc(p.marca)}</small></td>
+            <td>${esc(p.categoria_nome) || "-"}</td>
+            <td>${esc(p.tipo_pet) || "-"}</td>
+            <td>${p.estoque_atual} ${esc(p.unidade_venda) || "UN"}</td>
             <td>R$ ${Number(p.preco_venda).toFixed(2)}</td>
             <td>${formatarData(p.data_validade)}</td>
-            <td><span class="card-badge ${badgeClass}">${badgeTexto}</span></td>
+            <td>${badgeValidade(p.status_validade)} <span class="card-badge ${badgeClass}">${badgeTexto}</span></td>
             <td class="actions-cell">
                 <button class="btn-edit" onclick="editarProduto(${p.id})">Editar</button>
                 <button class="btn-delete" onclick="excluirProduto(${p.id})">Excluir</button>
@@ -234,8 +264,7 @@ document.getElementById("produtoForm").addEventListener("submit", async function
             limparFormulario();
             carregarProdutos();
         } else {
-            const erro = await resp.json();
-            alert(erro.erro || "Erro ao salvar produto.");
+            alert(await mensagemDeErro(resp, "Erro ao salvar produto."));
         }
     } catch (err) {
         console.error("Erro ao salvar produto:", err);
@@ -285,7 +314,7 @@ async function excluirProduto(id) {
         if (resp.ok) {
             carregarProdutos();
         } else {
-            alert("Erro ao excluir produto.");
+            alert(await mensagemDeErro(resp, "Erro ao excluir produto."));
         }
     } catch (err) {
         console.error("Erro ao excluir produto:", err);
